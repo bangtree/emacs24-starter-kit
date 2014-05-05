@@ -37,6 +37,17 @@
      (load-theme 'NPT t) ; s/u for no confirm on load
    #+end_src
 
+** setup buffer-move
+
+   #+begin_src emacs-lisp
+     (require 'buffer-move)
+     
+     (global-set-key (kbd "<C-S-up>")     'buf-move-up)
+     (global-set-key (kbd "<C-S-down>")   'buf-move-down)
+     (global-set-key (kbd "<C-S-left>")   'buf-move-left)
+     (global-set-key (kbd "<C-S-right>")  'buf-move-right)
+   #+end_src
+
 ** setup capture and grabber
 
    #+begin_src emacs-lisp
@@ -57,7 +68,7 @@
      (setq org-use-tag-inheritance nil) ; prevent sub-items from inheriting tags
    #+end_src
 
-** enable auto-fil
+** enable auto-fill
 
    #+begin_src emacs-lisp
      (add-hook 'org-mode-hook 'turn-on-auto-fill)
@@ -66,7 +77,7 @@
 ** agenda stuff
 
    #+begin_src emacs-lisp
-     (setq org-agenda-span 'day) ; default agenda view is a DAY
+     (setq org-agenda-span 'week)
      
      (setq org-agenda-custom-commands
            (quote
@@ -109,8 +120,8 @@
              ;;  "PRIORITY=\"A\"|PRIORITY=\"B\"|PRIORITY=\"C\"")
              
              ("j" "Test agenda"
-              ((agenda "" ((org-agenda-ndays 1) ; daily agenda
-                           (org-deadline-warning-days 7))) ; 7 day advanced warning for deadlines
+              ((agenda "" ((org-agenda-ndays 7)
+                           (org-deadline-warning-days 3))) ; 3 day advanced warning for deadlines
                (tags-todo "PRIORITY=\"A\"|PRIORITY=\"B\"|PRIORITY=\"C\"")
                (tags-todo "NOW")
                (tags-todo "NEXT")
@@ -618,7 +629,6 @@
      (require 'gnus-load)
 
      (starter-kit-load "gnus" "pretty-summary") ; pick up the display portion
-
    #+end_src
 
 ** use local info copies for local pkgs
