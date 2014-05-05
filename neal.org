@@ -184,11 +184,15 @@
 
    #+begin_src emacs-lisp
      (setq org-capture-templates
-           (quote (("i" "Inbox" entry
+           (quote (("b" "niggle" entry   ; b for "bugs me!"
+                    (file+headline "~/Desktop/Org/niggles.org" "Niggles")
+                    "* %u %?" :prepend t)
+                   
+                   ("i" "inbox" entry
                     (file+headline "~/Desktop/Org/inbox.org" "Tasks")
                     "* TODO %? %^g\n%u\n"
                     :empty-lines 1)
-     
+
                    ("n" "notes" entry
                     (file+headline "~/Desktop/Org/notes.org" "Notes")
                     "* %u %?" :prepend t))))
