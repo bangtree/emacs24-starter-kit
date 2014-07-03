@@ -5,11 +5,11 @@
 
   #+begin_src emacs-lisp
     (set-frame-font
-     "-apple-inconsolata-medium-r-normal--18-*-*-*-*-*-iso10646-1")
+     "-apple-inconsolata-medium-r-normal--16-*-*-*-*-*-iso10646-1")
     
     (set-face-attribute
      'default nil
-     :font "-apple-inconsolata-medium-r-normal--18-*-*-*-*-*-iso10646-1")
+     :font "-apple-inconsolata-medium-r-normal--16-*-*-*-*-*-iso10646-1")
   #+end_src
 
 * set up additional load paths
@@ -41,12 +41,13 @@
 
    #+begin_src emacs-lisp
      (require 'buffer-move)
-     
-     (global-set-key (kbd "<C-S-up>")     'buf-move-up)
-     (global-set-key (kbd "<C-S-down>")   'buf-move-down)
-     (global-set-key (kbd "<C-S-left>")   'buf-move-left)
-     (global-set-key (kbd "<C-S-right>")  'buf-move-right)
+
+     (global-set-key (kbd "<f7> j") 'buf-move-up)
+     (global-set-key (kbd "<f7> k") 'buf-move-down)
+     (global-set-key (kbd "<f7> h") 'buf-move-left)
+     (global-set-key (kbd "<f7> l") 'buf-move-right)
    #+end_src
+
 
 ** setup capture and grabber
 
@@ -78,7 +79,7 @@
 
    #+begin_src emacs-lisp
      (setq org-agenda-span 'week)
-     
+
      (setq org-agenda-custom-commands
            (quote
             (("n" "NOW's this buffer" tags-tree "NOW")
@@ -158,25 +159,25 @@
              ("z" agenda "Exp. Agenda - Scheduled Items"
               ((org-agenda-skip-function
                 '(org-agenda-skip-entry-if 'deadline)))))))
-     
+
      ; highlight lines in the agenda view
-     
+
      (add-hook 'org-agenda-mode-hook
                '(lambda ()
                   (hl-line-mode 1)))
-     
+
      (setq org-agenda-remove-tags 't)
-     
+
      ;; use an org file for dates
-     
+
      (setq org-agenda-diary-file
            "~/Desktop/Org/dates.org")
-     
+
      ;; set agenda sorting strategy
-     
+
      (setq org-agenda-sorting-strategy
            '(time-up priority-down))
-     
+
      (setq org-agenda-include-diary nil)
    #+end_src
 
