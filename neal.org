@@ -237,6 +237,30 @@
 
    #+end_src
 
+** tags
+   #+begin_src emacs-lisp
+     (setq org-tag-alist '(("ADMIN"   . ?a)
+                           ("CODING"  . ?c)
+                           ("ERRAND"  . ?e)
+                           ("EMAIL"   . ?m)
+                           ("PHONE"   . ?t)
+                           ("WRITING" . ?w)
+                           ("READING" . ?r)
+                           ("REVIEW"  . ?v)
+                           ("OPEN"    . ?o)
+                           ("GOAL"    . ?g)
+                           ("REPAIR"  . ?i)
+                           (:startgroup . nil)
+                           ("PROJECT" . ?p)
+                           ("NOW"     . ?1)
+                           ("NEXT"    . ?2)
+                           ("SOON"    . ?3)
+                           ("LATER"   . ?4)
+                           ("SOMEDAY" . ?s)
+                           (:endgroup . nil)))
+   #+end_src
+
+
 ** misc settings
 
    #+begin_src emacs-lisp
