@@ -78,7 +78,6 @@
 ** agenda stuff
 
    #+begin_src emacs-lisp
-     (setq org-agenda-span 'week)
 
      (setq org-agenda-custom-commands
            (quote
@@ -130,7 +129,7 @@
                (tags "PROJECT")))
 
              ("k" "Test agenda"
-              ((agenda "" ((org-agenda-ndays 7)
+              ((agenda "" ((org-agenda-ndays 1)
                            (org-deadline-warning-days 3))) ; 3 day advanced warning for deadlines
                (tags-todo "PRIORITY=\"A\"|PRIORITY=\"B\"|PRIORITY=\"C\"")
                (tags "PROJECT")
