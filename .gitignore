@@ -51,11 +51,14 @@ secret.org
 .emacs.desktop*
 .*~
 agent/*
-/bookmarks
-/custom themes/
-/ido.last
+
 /lisp/emacs-calfw/
 /lisp/emacs/
 /lisp/gnus/
 /lisp/org-mode/
+
+/custom themes/
+/ido.last
 /recentf
+/bookmarks
+

@@ -1,0 +1,748 @@
+#+TITLE: neal.org
+#+OPTIONS: toc:2 num:nil ^:nil
+
+* set up font
+
+  #+begin_src emacs-lisp
+    (set-frame-font
+     "-apple-inconsolata-medium-r-normal--16-*-*-*-*-*-iso10646-1")
+    
+    (set-face-attribute
+     'default nil
+     :font "-apple-inconsolata-medium-r-normal--16-*-*-*-*-*-iso10646-1")
+  #+end_src
+
+* set up additional load paths
+
+  Note: I added org-mode in the 'init.el' file so that my version is
+  used for the starter-kit file expansions.
+
+  This is where I'm keeping my custom themes
+  
+  #+begin_src emacs-lisp
+    (setq custom-theme-directory "~/.emacs.d/custom themes")
+  #+end_src
+  
+* load private customization's
+** setup up org-mode? probably unnecessary
+
+   #+begin_src emacs-lisp
+     (require 'org)
+     (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
+   #+end_src
+
+** load color theme
+
+   #+begin_src emacs-lisp
+     (load-theme 'NPT t) ; s/u for no confirm on load
+   #+end_src
+
+** setup buffer-move
+
+   #+begin_src emacs-lisp
+     (require 'buffer-move)
+
+     (global-set-key (kbd "<f7> j") 'buf-move-up)
+     (global-set-key (kbd "<f7> k") 'buf-move-down)
+     (global-set-key (kbd "<f7> h") 'buf-move-left)
+     (global-set-key (kbd "<f7> l") 'buf-move-right)
+   #+end_src
+
+
+** setup capture and grabber
+
+   #+begin_src emacs-lisp
+     (global-set-key "\C-cl" 'org-store-link)
+     (global-set-key "\C-cc" 'org-capture)
+     (global-set-key "\C-ca" 'org-agenda)
+     (global-set-key "\C-cb" 'org-iswitchb)
+     
+     ; MacOS X - grab highlighted text from various apps
+     (add-hook 'org-mode-hook
+               (lambda ()
+                  (define-key org-mode-map (kbd "C-c g") 'org-mac-grab-link)))
+   #+end_src  
+
+** tag ineritance
+
+   #+begin_src emacs-lisp
+     ;;; (setq org-use-tag-inheritance nil) ; prevent sub-items from inheriting tags
+   #+end_src
+
+** enable auto-fill
+
+   #+begin_src emacs-lisp
+     (add-hook 'org-mode-hook 'turn-on-auto-fill)
+   #+end_src
+
+** agenda stuff
+
+   #+begin_src emacs-lisp
+
+     (setq org-agenda-custom-commands
+           (quote
+            (("n" "NOW's this buffer" tags-tree "NOW")
+             ("N" "NOW's all buffers" tags "NOW")
+             
+             ("x" "NEXT's this buffer" tags-tree "NEXT")
+             ("X" "NEXT's all buffers" tags "NEXT")
+             
+             ;; *** HACK *** the file list needs something more sophisticated
+             ;; b/c clients are stored in their own files
+             
+             ("lw" "NOW|NEXT|SOON in work files" tags-todo "NOW|NEXT|SOON"
+              ((org-agenda-files
+                '("~/Desktop/Org/work.org" "~/Desktop/Org/valassis.org"))))
+             
+             ("lh" "NOW|NEXT|SOON in home file" tags-todo "NOW|NEXT|SOON"
+              ((org-agenda-files
+                '("~/Desktop/Org/home.org"))))
+             
+             ("o" "NEXT's this buffer" tags-tree ":OPEN:")
+             ("O" "NEXT's all buffers" tags ":OPEN:")
+             
+             ("p" "PROJECTS and TODO's" tags-tree "+PROJECT-SOMEDAY")
+             ("P" "PROJECTS and TODO's" tags-tree "+PROJECT")
+             
+             ("w" tags-tree #(":PROJECT:/WAIT" 0 14 (face org-warning)))
+             
+             ("i" tags #(":PROJECT:" 0 9 (face org-warning))
+              ((org-agenda-skip-function
+                (lambda ()
+                  (let ((subtree-end (save-excursion (org-end-of-subtree t))))
+                    (if (re-search-forward "TODO\\|NEXT\\|WAIT" subtree-end t)
+                        subtree-end
+                      nil))))
+               (org-agenda-overriding-header "Malformed projects: ")))
+             
+             ;; experimental cmd - show items with a PRIORITY
+             ;; ("x" "Priority items" tags-todo
+             ;;  "PRIORITY=\"A\"|PRIORITY=\"B\"|PRIORITY=\"C\"")
+             
+             ("j" "Test agenda"
+              ((agenda "" ((org-agenda-ndays 7)
+                           (org-deadline-warning-days 3))) ; 3 day advanced warning for deadlines
+               (tags-todo "PRIORITY=\"A\"|PRIORITY=\"B\"|PRIORITY=\"C\"")
+               (tags-todo "NOW")
+               (tags-todo "NEXT")
+               (tags-todo "SOON")
+               (tags "PROJECT")))
+
+             ("k" "Test agenda"
+              ((agenda "" ((org-agenda-ndays 1)
+                           (org-deadline-warning-days 3))) ; 3 day advanced warning for deadlines
+               (tags-todo "PRIORITY=\"A\"|PRIORITY=\"B\"|PRIORITY=\"C\"")
+               (tags "PROJECT")
+               (tags-todo "NOW")
+               (tags-todo "NEXT")
+               (tags-todo "SOON")
+               (tags "SOMEDAY")))
+             
+             ;; ((agenda "" ((org-agenda-overriding-header
+             ;;           "\nWeek Overview\n-----------\n")
+             ;;          (org-agenda-span 'week) ; overview of appointments
+             ;;              (org-agenda-start-on-weekday nil) ; calendar begins today
+             ;;              (org-agenda-repeating-timestamp-show-all t)
+             ;;              (org-agenda-entry-types '(:timestamp :sexp))))
+             ;;  (agenda "" ((org-agenda-span 'day) ; daily agenda
+             ;;              (org-deadline-warning-days 7) ; 7 day advanced warning for deadlines
+             ;;              (org-agenda-todo-keyword-format "[ ]")
+             ;;              (org-agenda-scheduled-leaders '("" ""))
+             ;;              (org-agenda-prefix-format "%t%s")
+             ;;          (org-agenda-overriding-header
+             ;;           "\nDaily Agenda\n------------\n")))
+             ;;  (todo "TODO" ; todos sorted by context
+             ;;        ((org-agenda-prefix-format "[ ] %T: ")
+             ;;         (org-agenda-sorting-strategy '(tag-up priority-down))
+             ;;         (org-agenda-todo-keyword-format "")
+             ;;         (org-agenda-overriding-header
+             ;;      "\nTasks by Context\n------------------\n"))))
+             ;; ((org-agenda-with-color nil)
+             ;;  (org-agenda-compact-blocks t)
+             ;;  (org-agenda-remove-tags t)
+             ;;  (ps-number-of-columns 2)
+             ;;   (ps-landscape-mode t))
+             ;; ("~/agenda.ps"))
+             
+             ; experimental cmd - agenda w/only items that are scheduled
+             ("z" agenda "Exp. Agenda - Scheduled Items"
+              ((org-agenda-skip-function
+                '(org-agenda-skip-entry-if 'deadline)))))))
+
+     ; highlight lines in the agenda view
+
+     (add-hook 'org-agenda-mode-hook
+               '(lambda ()
+                  (hl-line-mode 1)))
+
+     (setq org-agenda-remove-tags 't)
+
+     ;; use an org file for dates
+
+     (setq org-agenda-diary-file
+           "~/Desktop/Org/dates.org")
+
+     ;; set agenda sorting strategy
+
+     (setq org-agenda-sorting-strategy
+           '(time-up priority-down))
+
+     (setq org-agenda-include-diary nil)
+   #+end_src
+
+** capture templates
+
+   #+begin_src emacs-lisp
+     (setq org-capture-templates
+           (quote (("b" "niggle" entry   ; b for "bugs me!"
+                    (file+headline "~/Desktop/Org/niggles.org" "Niggles")
+                    "* %u %?" :prepend t)
+                   
+                   ("i" "inbox" entry
+                    (file+headline "~/Desktop/Org/inbox.org" "Tasks")
+                    "* TODO %? %^g\n%u\n"
+                    :empty-lines 1)
+
+                   ("n" "notes" entry
+                    (file+headline "~/Desktop/Org/notes.org" "Notes")
+                    "* %u %?" :prepend t))))
+
+     #+end_src
+
+** todo keywords
+
+   #+begin_src emacs-lisp
+     (setq org-todo-keywords
+           '((sequence "TODO(t)" "WAIT(w@/!)" "DONE(d!)")))
+     
+     (setq org-todo-keyword-faces
+           (quote (("TODO" . (:foreground "green4"))
+                   ("WAIT" . "OrangeRed1")
+                   ("DONE" . (:foreground "SteelBlue1")))))
+     
+     (setq org-priority-faces
+           '((?A . (:foreground "red" :weight bold))
+             (?B . (:foreground "blue" :weight bold))
+             (?C . (:foreground "orchid4" :weight bold))))
+     
+     (setq org-use-fast-todo-selection 't)
+     
+     ;; remove the NEXT tag for any done states
+     
+     (setq org-todo-state-tags-triggers
+           '((done ("NOW" . nil )
+                   ("NEXT" . nil)
+                   ("OPEN" . nil))))
+
+   #+end_src
+
+** tags
+   #+begin_src emacs-lisp
+     (setq org-tag-alist '(("ADMIN"   . ?a)
+                           ("CODING"  . ?c)
+                           ("ERRAND"  . ?e)
+                           ("EMAIL"   . ?m)
+                           ("PHONE"   . ?t)
+                           ("WRITING" . ?w)
+                           ("READING" . ?r)
+                           ("REVIEW"  . ?v)
+                           ("OPEN"    . ?o)
+                           ("GOAL"    . ?g)
+                           ("REPAIR"  . ?i)
+                           (:startgroup . nil)
+                           ("PROJECT" . ?p)
+                           ("NOW"     . ?1)
+                           ("NEXT"    . ?2)
+                           ("SOON"    . ?3)
+                           ("LATER"   . ?4)
+                           ("SOMEDAY" . ?s)
+                           (:endgroup . nil)))
+   #+end_src
+
+
+** misc settings
+
+   #+begin_src emacs-lisp
+     ;; Don't split headlines in the middle
+     
+     (setq org-M-RET-may-split-line '((headline . nil) (default . t)))
+
+     ;; return to activate a link
+     
+     (setq org-return-follows-link t)
+
+     (setq org-refile-use-outline-path 't)
+
+   #+end_src
+     
+** set landscape printing
+
+   #+begin_src emacs-lisp
+     (setq ps-landscape-mode t)
+     (setq ps-n-up-on t)
+     (setq ps-number-of-columns 2)
+
+   #+end_src
+
+** icalendar exports
+
+   #+begin_src emacs-lisp
+     (setq org-icalendar-timezone "America/Indiana/Indianapolis")
+     
+     (setq org-icalendar-include-todo nil)
+
+   #+end_src
+
+** org-protocol
+
+   #+begin_src emacs-lisp
+     (require 'org-protocol)
+
+   #+end_src
+
+** org-babel
+
+   #+begin_src emacs-lisp
+     (org-babel-do-load-languages
+      'org-babel-load-languages
+      '((emacs-lisp . t)
+        (calc . t)
+        (dot . t)
+        (gnuplot . t)
+        (ledger . t)
+        (octave . t)
+        (R . t)
+        (awk . t)
+        (C . t)
+        (clojure . t)
+        (ditaa . t)
+        (latex . t)
+        (lisp . t)
+        (perl . t)
+        (python . t)
+        (ruby . t)
+        (sh . t)))
+
+     #+end_src
+
+** org-crypt
+
+   #+begin_src emacs-lisp
+     (require 'org-crypt)
+     (org-crypt-use-before-save-magic)
+     
+     (setq org-tags-exclude-from-inheritance (quote ("crypt")))
+     
+     (setq org-crypt-key nil)
+     ;; GPG key to use for encryption
+     ;; Either the Key ID or set to nil to use symmetric encryption.
+     
+     (setq auto-save-default nil)
+     ;; Auto-saving does not cooperate with org-crypt.el: so you need
+     ;; to turn it off if you plan to use org-crypt.el quite often.
+     ;; Otherwise, you'll get an (annoying) message each time you
+     ;; start Org.
+     
+     ;; To turn it off only locally, you can insert this:
+     ;;
+     ;; # -*- buffer-auto-save-file-name: nil; -*-
+     
+   #+end_src
+   
+** Setup publishing
+
+   #+begin_src emacs-lisp
+     ;; (require 'ox-html)
+     
+     ;; (setq org-publish-project-alist
+     ;;       '(("orgfiles"
+     ;;          :base-directory "~/Desktop/Org/"
+     ;;          :base-extension "org"
+     ;;          :publishing-directory "/Volumes/WualaDrive/bangtree/Org/"
+     ;;          :publishing-function org-html-publish-to-html
+     ;;          :headline-levels 3
+     ;;          :section-numbers nil
+     ;;          :table-of-contents nil
+     ;;          )))
+
+   #+end_src
+     
+** org utility fcns
+
+   #+begin_src emacs-lisp
+     ; Seen on gmane.emacs.orgmode
+     ; [[gnus:gmane.emacs.orgmode#87y5b68y46.fsf@fastmail.fm]
+     ;  [Email from Matt Lundin: Re: Seeking advice on structuring my org-mode file]]
+     ;
+     ; Will take a headline and move it to a file
+     
+     (defun my-org-file-from-headline (file)
+       (interactive
+        (list
+         (completing-read "File: "
+                          (mapcar 'file-name-nondirectory
+                                  (file-expand-wildcards "~/org/*.org"))
+                          nil nil)))
+       (unless (string-match "\\.org$" file)
+         (error "Not an org file"))
+       (save-excursion
+         (beginning-of-line)
+         (unless (org-at-heading-p)
+           (error "Not on a headline")))
+       (let* ((exists (file-exists-p file))
+              (ftags (append
+                      (list (file-name-sans-extension file))
+                      (mapcar 'substring-no-properties org-file-tags)))
+              (headline (nth 4 (org-heading-components)))
+              (org-archive-reversed-order t)
+              (org-archive-location (concat file "::"))
+              (org-archive-save-context-info nil))
+         (org-archive-subtree)
+         (save-excursion (insert "* [[file:" file "][" file "]] - " headline "\n"))
+         (find-file file)
+         (goto-char (point-min))
+         (save-excursion
+           (if (re-search-forward "#\\+FILETAGS:\\(.*\\)$" nil t)
+               (progn
+                 (save-match-data
+                   (setq ftags
+                         (mapconcat 'identity
+                                    (org-uniquify
+                                     (append ftags
+                                             (split-string
+                                              (substring-no-properties
+                                               (match-string 1))))) " ")))
+                 (replace-match (concat "#+FILETAGS: " ftags)))
+             (insert "#+FILETAGS: " (mapconcat 'identity ftags " ") "\n"))
+           (goto-char (point-min))
+           (unless (re-search-forward "#\\+CATEGORY:\\(.*\\)$" nil t)
+             (insert "#+CATEGORY: " (file-name-sans-extension file) "\n"))
+           (goto-char (point-min))
+           (when (re-search-forward "^Archived entries from file.+\n" nil t)
+             (replace-match ""))))
+       (write-file file))
+
+   #+end_src
+     
+** ERC config
+
+   #+begin_src emacs-lisp
+     (setq erc-hide-list
+           '("JOIN" "PART" "QUIT"))
+     
+     (setq erc-nick "bangtree")
+     
+     ;;; erc nick colors
+     ;;; From: http://www.emacswiki.org/emacs/ErcNickColors
+     
+     ;; Pool of colors to use when coloring IRC nicks.
+     (setq erc-colors-list '("green" "blue" "red"
+                             "dark gray" "dark orange"
+                             "dark magenta" "maroon"
+                             "indian red" "black" "forest green"
+                             "midnight blue" "dark violet"))
+     
+     ;; special colors for some people
+     (setq erc-nick-color-alist '(("John" . "blue")
+                                  ("Bob" . "red")
+                                  ))
+     
+     (defun erc-get-color-for-nick (nick)
+       "Gets a color for NICK. If NICK is in erc-nick-color-alist, use that color, else hash the nick and use a random color from the pool"
+       (or (cdr (assoc nick erc-nick-color-alist))
+           (nth
+            (mod (string-to-number
+                  (substring (md5 (downcase nick)) 0 6) 16)
+                 (length erc-colors-list))
+            erc-colors-list)))
+     
+     (defun erc-put-color-on-nick ()
+       "Modifies the color of nicks according to erc-get-color-for-nick"
+       (save-excursion
+         (goto-char (point-min))
+         (if (looking-at "<\\([^>]*\\)>")
+             (let ((nick (match-string 1)))
+               (put-text-property (match-beginning 1) (match-end 1) 'face
+                                  (cons 'foreground-color
+                                        (erc-get-color-for-nick nick)))))))
+     
+     (add-hook 'erc-insert-modify-hook 'erc-put-color-on-nick)
+     
+   #+end_src     
+
+** custom-set-variables
+
+   #+begin_src emacs-lisp
+     (custom-set-variables
+      ;; custom-set-variables was added by Custom.
+      ;; If you edit it by hand, you could mess it up, so be careful.
+      ;; Your init file should contain only one such instance.
+      ;; If there is more than one, they won't work right.
+      '(cal-tex-diary t)
+      '(cal-tex-rules t)
+      '(calendar-christian-all-holidays-flag nil)
+      '(calendar-latitude 40.11)
+      '(calendar-location-name "Cicero, IN")
+      '(calendar-longitude -86.01)
+      '(canlock-password "53065a7ff1c55023c777a716e0cafa08bef2d9e8")
+      '(case-fold-search t)
+      '(color-theme-is-cumulative nil)
+      '(color-theme-is-global t)
+      '(current-language-environment "English")
+      '(custom-safe-themes (quote ("b7553781f4a831d5af6545f7a5967eb002c8daeee688c5cbf33bf27936ec18b3" "1e7e097ec8cb1f8c3a912d7e1e0331caeed49fef6cff220be63bd2a6ba4cc365" "fc5fcb6f1f1c1bc01305694c59a1a861b008c534cae8d0e48e4d5e81ad718bc6" default)))
+      '(diary-file "~/Desktop/Org/diary")
+      '(display-battery-mode t)
+      '(display-time-mode t)
+      '(erc-modules (quote (autojoin button fill irccontrols match netsplit noncommands pcomplete readonly ring stamp track)))
+      '(fancy-splash-image nil)
+      '(global-font-lock-mode t)
+      '(holiday-christian-holidays nil)
+      '(holiday-hebrew-holidays nil)
+      '(holiday-islamic-holidays nil)
+      '(inferior-lisp-load-command "(load \"%s\")")
+      '(inhibit-startup-screen t)
+      '(ledit-go-to-lisp-string "%?lisp" t)
+      '(markdown-command "multimarkdown")
+      '(mouse-wheel-mode t nil (mwheel))
+      '(org-agenda-files (quote ("~/Desktop/Org/inbox.org" "~/Desktop/Org/valassis.org" "~/Desktop/Org/habits.org" "~/Desktop/Org/goals.org" "~/Desktop/Org/dates.org" "~/Desktop/Org/work.org" "~/Desktop/Org/home.org")))
+      '(org-agenda-restore-windows-after-quit t)
+      '(org-agenda-show-all-dates t)
+      '(org-agenda-skip-deadline-if-done t)
+      '(org-agenda-skip-scheduled-if-done t)
+      '(org-agenda-start-on-weekday 1)
+      '(org-agenda-time-grid (quote ((daily today require-timed remove-match) #("----------------" 0 16 (org-heading t)) (800 1000 1200 1400 1600 1800 2000))))
+      '(org-agenda-window-setup (quote current-window))
+      '(org-deadline-warning-days 14)
+      '(org-default-notes-file "~/Desktop/Org/notes.org")
+      '(org-export-latex-emphasis-alist (quote (("*" "\\textbf{%s}" nil) ("/" "\\emph{%s}" nil) ("_" "\\underline{%s}" nil) ("+" "\\st{%s}" nil) ("=" "\\protectedtexttt" t) ("~" "\\verb" t) ("@" "\\alert{%s}" nil))))
+      '(org-fast-tag-selection-single-key (quote expert))
+      '(org-icalendar-include-todo t t)
+      '(org-indirect-buffer-display (quote make-frame))
+      '(org-log-done (quote (done state)))
+      '(org-log-into-drawer t)
+      '(org-modules (quote (org-bbdb org-bibtex org-crypt org-docview org-gnus org-info org-jsinfo org-habit org-irc org-rmail org-w3m org-mac-link)))
+      '(org-refile-targets (quote ((org-agenda-files :maxlevel . 2))))
+      '(org-reverse-note-order t)
+      '(org-stuck-projects (quote ("PROJECT-SOMEDAY" ("TODO" "DONE") nil "")))
+      '(paren-match-face (quote paren-face-match-light))
+      '(paren-sexp-mode t)
+      '(printer-name "Brother_MFC_8480DN")
+      '(ps-black-white-faces (quote ((font-lock-builtin-face "black" nil bold) (font-lock-comment-face "gray20" nil italic) (font-lock-constant-face "black" nil bold) (font-lock-function-name-face "black" nil bold) (font-lock-keyword-face "black" nil bold) (font-lock-string-face "black" nil italic) (font-lock-type-face "black" nil italic) (font-lock-variable-name-face "black" nil bold italic) (font-lock-warning-face "black" nil bold italic) (org-agenda-date-today nil nil bold italic box) (org-agenda-date nil nil bold italic underline) (org-agenda-date-weekend nil nil bold italic underline) (org-warning nil nil bold))))
+      '(ps-font-size (quote (7 . 9)))
+      '(ps-print-color-p nil)
+      '(ps-print-footer t)
+      '(ps-print-footer-frame nil)
+      '(ps-print-header nil)
+      '(ps-print-header-frame nil)
+      '(ps-printer-name nil)
+      '(scheme-program-name "mzscheme")
+      '(scroll-bar-mode nil)
+      '(tex-dvi-print-command "dvips * -o - | lpr")
+      '(tex-dvi-view-command "xdvi")
+      '(tool-bar-mode nil)
+      '(x-select-enable-clipboard t))
+
+   #+end_src
+
+** custom faces
+
+   #+begin_src emacs-lisp
+     ;; (custom-set-faces
+     ;;  ;; custom-set-faces was added by Custom.
+     ;;  ;; If you edit it by hand, you could mess it up, so be careful.
+     ;;  ;; Your init file should contain only one such instance.
+     ;;  ;; If there is more than one, they won't work right.
+     ;;  ;;'(default
+     ;;  ;;   ((t (:stipple nil :background "#141414" :foreground "#f0f0f0" :inverse-video nil))))
+      
+     ;;  '(highlight
+     ;;    ((t (:background "cyan" :foreground "dim gray" :inverse-video t
+     ;;                     :box (:line-width 2 :color "grey20" :style released-button)
+     ;;                     :slant italic :weight bold))))
+      
+     ;;  '(npt-org-deadline-yesterday
+     ;;    ((t (:foreground "red" :weight bold))) t)
+      
+     ;;  '(org-agenda-clocking
+     ;;    ((t (:inherit secondary-selection :foreground "dark red"))) t)
+      
+     ;;  '(org-date
+     ;;    ((t (:foreground "DarkGoldenrod3" :underline t))))
+      
+     ;;  '(org-scheduled-previously
+     ;;    ((((class color) (min-colors 88) (background dark)) (:foreground "yellow2"))))
+      
+     ;;  '(org-scheduled-today
+     ;;    ((((class color) (min-colors 88) (background dark)) (:foreground "LimeGreen"))))
+     
+     ;;  '(org-sexp-date
+     ;;    ((t (:foreground "plum"))))
+      
+     ;;  '(org-special-keyword
+     ;;    ((((class color) (min-colors 16) (background dark)) (:foreground "firebrick"))))
+      
+     ;;  '(org-todo
+     ;;    ((t (:foreground "DarkCyan" :weight bold))))
+      
+     ;;  ;; '(org-warning
+     ;;  ;;   ((t (:foreground "OrangeRed"))))
+     
+     ;;  '(org-warning
+     ;;    ((t (:foreground "Red"))))
+      
+     ;;  '(region
+     ;;    ((t (:background "ns_selection_color" :foreground "blue"))))
+      
+     ;;  '(twit-message-face
+     ;;    ((default (:family "DejaVu Sans Mono")) (nil nil)) t))
+     
+     ;; ;; '(npt-org-deadline-today
+     ;; ;;   ((t (:foreground "white" :weight bold))))
+     
+     ;; ;; '(npt-org-deadline-tomorrow
+     ;; ;;   ((t (:foreground "black" :background "#B4F1B3" :weight bold))))
+     
+     ;; ;; '(npt-org-deadline-later
+     ;; ;;   ((t (:foreground "black" :background "#AACAFC")))))
+     
+   #+end_src
+
+** start emacs server
+
+   #+begin_src emacs-lisp
+     (server-start)
+
+   #+end_src
+
+** Keymap mods
+
+   #+begin_src emacs-lisp
+     (global-set-key "\C-x\C-b" 'electric-buffer-list)
+     
+     (iswitchb-mode t) ; turn on iswitchb mode
+     
+     (define-key global-map (kbd "<f7> b") 'browse-url-at-point)
+     (define-key global-map (kbd "<f7> d") 'org-cut-subtree)
+     (define-key global-map (kbd "<f7> f") 'org-refile)
+     (define-key global-map (kbd "<f7> r") 'org-capture)
+     
+     (define-key global-map (kbd "<f8>") 'make-frame)
+     (define-key global-map (kbd "<f9>") 'delete-frame)
+     (define-key global-map (kbd "<f12>") 'org-cut-special)
+
+   #+end_src
+
+** ELPA setup
+
+   #+begin_src emacs-lisp
+     (setq package-archives '(("ELPA" . "http://tromey.com/elpa/") 
+                              ("gnu" . "http://elpa.gnu.org/packages/")
+                              ("marmalade" . "http://marmalade-repo.org/packages/")
+                              ("melpa" . "http://melpa.milkbox.net/packages/")))
+     
+     (require 'package)
+     (package-initialize)
+
+   #+end_src
+
+** clojure setup
+
+   #+begin_src emacs-lisp
+     (require 'clojure-mode)
+     
+     (defun turn-on-paredit ()
+       (paredit-mode 1))
+     
+     (add-hook 'clojure-mode-hook
+               'turn-on-paredit)
+
+   #+end_src
+
+** use my local git copy of gnus
+
+   #+begin_src emacs-lisp
+     (setq load-path
+           (cons (expand-file-name "~/.emacs.d/lisp/gnus/lisp") load-path))
+     
+     (require 'gnus-load)
+
+     (starter-kit-load "gnus" "pretty-summary") ; pick up the display portion
+   #+end_src
+
+** use local info copies for local pkgs
+
+   #+begin_src emacs-lisp
+     (require 'info)
+     
+     (setq Info-default-directory-list
+           (append '("~/.emacs.d/lisp/org-mode/doc/" "~/.emacs.d/lisp/gnus/texi/")
+                   Info-default-directory-list))
+
+   #+end_src
+
+** setup PATH
+
+   #+begin_src emacs-lisp
+     
+     (defun set-exec-path-from-shell-PATH ()
+       "Set up Emacs' `exec-path' and PATH environment variable to match that used by
+        the user's shell. This is particularly useful under Mac OSX, where GUI apps are
+        not started from a shell."
+       
+       (interactive)
+     
+       (let* ((raw-shell-path (shell-command-to-string "$SHELL --login -i -c 'echo $PATH'"))
+              (path-from-shell (replace-regexp-in-string "[ \t\n]*$" "" raw-shell-path)))
+     
+              (message "setting PATH env to: %s" path-from-shell)
+              (setenv "PATH" path-from-shell)
+              (setq exec-path (split-string path-from-shell path-separator))))
+     
+     (set-exec-path-from-shell-PATH)
+     
+   #+end_src
+
+** setup calfw calendar
+
+   #+begin_src emacs-lisp
+     (setq load-path
+           (cons (expand-file-name "~/.emacs.d/lisp/emacs-calfw")
+                  load-path))
+     
+     (require 'calfw)
+     (require 'calfw-ical)
+     
+     (defun doit ()
+       (interactive)
+       (cfw:open-ical-calendar
+        "https://www.google.com/calendar/ical/wbangtree%40gmail.com/private-de183b4afdc0ff454614f73a9af325c8/basic.ics"))
+   #+end_src
+
+** Experimental MacOS X hacks
+
+   #+begin_src emacs-lisp
+     (defun osx-p ()
+       (string= "darwin" system-type))
+     
+     (when (and (osx-p) window-system)
+       ;; make option the super key on mac
+       (setq mac-option-modifier 'super)
+       ;; map meta to command key for mac
+       (setq ns-command-modifier 'meta))
+
+   #+end_src
+  
+** Info HACK
+   #+begin_src emacs-lisp
+     ;; Just push the latest org-mode doc on to the info path
+
+     ;; (push "/Users/neal/.emacs.d/lisp/org-mode/doc" Info-directory-list)
+
+  #+end_src
+
+** The last thing
+   #+begin_src emacs-lisp
+   
+;     (set-face-background 'hl-line "#2f2f2f") ; tweak highlighting for agenda
+
+   #+end_src
