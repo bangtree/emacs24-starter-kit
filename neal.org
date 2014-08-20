@@ -66,7 +66,7 @@
 ** tag ineritance
 
    #+begin_src emacs-lisp
-     ;;; (setq org-use-tag-inheritance nil) ; prevent sub-items from inheriting tags
+     (setq org-use-tag-inheritance nil) ; prevent sub-items from inheriting tags
    #+end_src
 
 ** enable auto-fill
@@ -87,9 +87,6 @@
              ("x" "NEXT's this buffer" tags-tree "NEXT")
              ("X" "NEXT's all buffers" tags "NEXT")
              
-             ;; *** HACK *** the file list needs something more sophisticated
-             ;; b/c clients are stored in their own files
-             
              ("lw" "NOW|NEXT|SOON in work files" tags-todo "NOW|NEXT|SOON"
               ((org-agenda-files
                 '("~/Desktop/Org/work.org" "~/Desktop/Org/valassis.org"))))
@@ -101,8 +98,13 @@
              ("o" "NEXT's this buffer" tags-tree ":OPEN:")
              ("O" "NEXT's all buffers" tags ":OPEN:")
              
-             ("p" "PROJECTS and TODO's" tags-tree "+PROJECT-SOMEDAY")
-             ("P" "PROJECTS and TODO's" tags-tree "+PROJECT")
+             ("p" "PROJECT's w/TODO's"
+              tags-tree "+PROJECT-SOMEDAY"
+              ((org-use-tag-inheritance t)))
+
+             ("P" "PROJECT's and SOMEDAY's w/TODO's"
+              tags-tree ":PROJECT:|:SOMEDAY:"
+              ((org-use-tag-inheritance t)))
              
              ("w" tags-tree #(":PROJECT:/WAIT" 0 14 (face org-warning)))
              
@@ -115,59 +117,41 @@
                       nil))))
                (org-agenda-overriding-header "Malformed projects: ")))
              
-             ;; experimental cmd - show items with a PRIORITY
-             ;; ("x" "Priority items" tags-todo
-             ;;  "PRIORITY=\"A\"|PRIORITY=\"B\"|PRIORITY=\"C\"")
-             
              ("j" "Test agenda"
-              ((agenda "" ((org-agenda-ndays 7)
-                           (org-deadline-warning-days 3))) ; 3 day advanced warning for deadlines
-               (tags-todo "PRIORITY=\"A\"|PRIORITY=\"B\"|PRIORITY=\"C\"")
-               (tags-todo "NOW")
-               (tags-todo "NEXT")
-               (tags-todo "SOON")
-               (tags "PROJECT")))
-
-             ("k" "Test agenda"
               ((agenda "" ((org-agenda-ndays 1)
-                           (org-deadline-warning-days 3))) ; 3 day advanced warning for deadlines
+                           (org-deadline-warning-days 3)))
                (tags-todo "PRIORITY=\"A\"|PRIORITY=\"B\"|PRIORITY=\"C\"")
                (tags "PROJECT")
                (tags-todo "NOW")
                (tags-todo "NEXT")
                (tags-todo "SOON")
                (tags "SOMEDAY")))
-             
-             ;; ((agenda "" ((org-agenda-overriding-header
-             ;;           "\nWeek Overview\n-----------\n")
-             ;;          (org-agenda-span 'week) ; overview of appointments
-             ;;              (org-agenda-start-on-weekday nil) ; calendar begins today
-             ;;              (org-agenda-repeating-timestamp-show-all t)
-             ;;              (org-agenda-entry-types '(:timestamp :sexp))))
-             ;;  (agenda "" ((org-agenda-span 'day) ; daily agenda
-             ;;              (org-deadline-warning-days 7) ; 7 day advanced warning for deadlines
-             ;;              (org-agenda-todo-keyword-format "[ ]")
-             ;;              (org-agenda-scheduled-leaders '("" ""))
-             ;;              (org-agenda-prefix-format "%t%s")
-             ;;          (org-agenda-overriding-header
-             ;;           "\nDaily Agenda\n------------\n")))
-             ;;  (todo "TODO" ; todos sorted by context
-             ;;        ((org-agenda-prefix-format "[ ] %T: ")
-             ;;         (org-agenda-sorting-strategy '(tag-up priority-down))
-             ;;         (org-agenda-todo-keyword-format "")
-             ;;         (org-agenda-overriding-header
-             ;;      "\nTasks by Context\n------------------\n"))))
-             ;; ((org-agenda-with-color nil)
-             ;;  (org-agenda-compact-blocks t)
-             ;;  (org-agenda-remove-tags t)
-             ;;  (ps-number-of-columns 2)
-             ;;   (ps-landscape-mode t))
-             ;; ("~/agenda.ps"))
-             
-             ; experimental cmd - agenda w/only items that are scheduled
-             ("z" agenda "Exp. Agenda - Scheduled Items"
-              ((org-agenda-skip-function
-                '(org-agenda-skip-entry-if 'deadline)))))))
+
+              ("k" "Expanded agenda"
+               ((agenda "" ((org-agenda-overriding-header "\nWeek Overview\n-----------\n")
+                            (org-agenda-span 'week) ; overview of appointments
+                            (org-agenda-start-on-weekday nil) ; calendar begins today
+                            (org-agenda-repeating-timestamp-show-all t)
+                            (org-agenda-entry-types '(:timestamp :sexp))))
+                (agenda "" ((org-agenda-overriding-header "\nDaily Agenda\n------------\n")
+                            (org-agenda-span 'day) ; daily agenda
+                            (org-deadline-warning-days 7) ; 7 day advanced warning for deadlines
+                            (org-agenda-todo-keyword-format "[ ]")
+                            (org-agenda-scheduled-leaders '("" ""))
+                            (org-agenda-prefix-format "%t%s")))
+                (todo "TODO" ; todos sorted by context
+                      ((org-agenda-prefix-format "[ ] %T: ")
+                       (org-agenda-sorting-strategy '(tag-up priority-down))
+                       (org-agenda-todo-keyword-format "")
+                       (org-agenda-overriding-header
+                        "\nTasks by Context\n------------------\n"))))
+               ((org-agenda-with-color nil)
+                (org-agenda-compact-blocks t)
+                (org-agenda-remove-tags t)
+                (ps-number-of-columns 2)
+                (ps-landscape-mode t))
+               ("~/agenda.ps")))))
+              
 
      ; highlight lines in the agenda view
 
@@ -521,7 +505,7 @@
       '(org-log-done (quote (done state)))
       '(org-log-into-drawer t)
       '(org-modules (quote (org-bbdb org-bibtex org-crypt org-docview org-gnus org-info org-jsinfo org-habit org-irc org-rmail org-w3m org-mac-link)))
-      '(org-refile-targets (quote ((org-agenda-files :maxlevel . 2))))
+      '(org-refile-targets (quote ((org-agenda-files :maxlevel . 4))))
       '(org-reverse-note-order t)
       '(org-stuck-projects (quote ("PROJECT-SOMEDAY" ("TODO" "DONE") nil "")))
       '(paren-match-face (quote paren-face-match-light))
